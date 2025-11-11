@@ -139,12 +139,12 @@ class EnhancementEngine:
         discipline: str
     ) -> tuple[str, List[Dict]]:
         """Level 2: Native-like expression enhancement."""
-        prompt = f"""Fix awkward non-native phrases in this {discipline} text. Keep it natural and human - not polished or uniform. Preserve the author's style and vocabulary level.
+        prompt = f"""Fix awkward non-native phrases in this {discipline} text. Make it sound like a real person wrote it - natural, with personality, NOT polished or AI-generated. Keep the author's word choices and sentence patterns. Don't make everything uniform.
 
 {text}"""
 
         try:
-            enhanced = await self.llm_client.generate(prompt, temperature=0.7, max_tokens=4000)
+            enhanced = await self.llm_client.generate(prompt, temperature=0.75, max_tokens=4000)
             logger.info(f"Level 2 completed: {len(text)} chars -> {len(enhanced)} chars")
             if len(enhanced) == 0:
                 logger.error("Level 2 returned empty text, using original")
@@ -161,12 +161,12 @@ class EnhancementEngine:
         discipline: str
     ) -> tuple[str, List[Dict]]:
         """Level 3: Academic style and conventions."""
-        prompt = f"""Improve this {discipline} paper for publication. Add academic phrasing selectively - keep the author's voice, examples, and personality. Real human papers aren't perfectly formal.
+        prompt = f"""Lightly adjust this {discipline} text toward academic style, but DON'T make it sound AI-written or overly formal. Keep the author's exact examples, reasoning flow, and personality. Real human academic writing has inconsistencies - preserve them. Only fix what truly needs fixing.
 
 {text}"""
 
         try:
-            enhanced = await self.llm_client.generate(prompt, temperature=0.75, max_tokens=4000)
+            enhanced = await self.llm_client.generate(prompt, temperature=0.85, max_tokens=4000)
             logger.info(f"Level 3 completed: {len(text)} chars -> {len(enhanced)} chars")
             if len(enhanced) == 0:
                 logger.error("Level 3 returned empty text, using original")
@@ -183,12 +183,12 @@ class EnhancementEngine:
         discipline: str
     ) -> tuple[str, List[Dict]]:
         """Level 4: Overall discourse and coherence optimization."""
-        prompt = f"""Improve flow and coherence in this {discipline} paper. Keep natural transitions - not perfect ones. Maintain sentence variety and the author's organizational style. Avoid AI-like uniformity.
+        prompt = f"""Adjust transitions ONLY where absolutely needed in this {discipline} text. Keep the author's organizational approach even if imperfect. Real human writing has natural jumps and rhythm variations - DON'T smooth everything out. Maintain roughness and authenticity. Avoid creating AI-like perfect coherence.
 
 {text}"""
 
         try:
-            enhanced = await self.llm_client.generate(prompt, temperature=0.8, max_tokens=4000)
+            enhanced = await self.llm_client.generate(prompt, temperature=0.9, max_tokens=4000)
             logger.info(f"Level 4 completed: {len(text)} chars -> {len(enhanced)} chars")
             if len(enhanced) == 0:
                 logger.error("Level 4 returned empty text, using original")
