@@ -45,7 +45,8 @@ class EnhancementEngine:
         all_changes = []
 
         # Track progress
-        total_stages = min(level + 2, 6)  # Pre-processing + levels + report
+        # Pre-processing + levels + humanization (if level >= 3) + report
+        total_stages = min(level + 2, 6) if level < 3 else min(level + 3, 7)
         current_stage = 0
 
         def update_progress(stage_name: str, percentage: float):
@@ -95,6 +96,14 @@ class EnhancementEngine:
                 )
                 all_changes.extend(changes)
 
+            # Apply humanization post-processing for Level 3+
+            if level >= 3:
+                update_progress("Humanization Post-Processing", 85)
+                enhanced_text, changes = await self._humanization_postprocess(
+                    enhanced_text, discipline
+                )
+                all_changes.extend(changes)
+
             # Generate report
             update_progress("Generating Report", 95)
             report = await self._generate_report(original_text, enhanced_text, all_changes)
@@ -117,12 +126,23 @@ class EnhancementEngine:
         discipline: str
     ) -> tuple[str, List[Dict]]:
         """Level 1: Basic grammar and spelling corrections."""
-        prompt = f"""Fix only obvious grammar/spelling errors in this {discipline} text. Keep the author's style and voice unchanged. Do NOT rewrite or improve.
+        prompt = f"""Fix ONLY clear grammar and spelling errors in this {discipline} text.
 
-{text}"""
+CRITICAL - MINIMAL CHANGES:
+- Fix obvious typos and grammar mistakes only
+- Do NOT improve style, word choice, or sentence structure
+- Keep the author's exact phrasing, even if informal or awkward
+- Preserve all original sentence patterns and rhythm
+- Maintain any informal language or colloquialisms
+- Think: "What would a human do with track changes?" not "How can I improve this?"
+
+Original text:
+{text}
+
+Return the text with ONLY grammar/spelling fixes:"""
 
         try:
-            enhanced = await self.llm_client.generate(prompt, temperature=0.6, max_tokens=4000)
+            enhanced = await self.llm_client.generate(prompt, temperature=0.65, max_tokens=4000)
             logger.info(f"Level 1 completed: {len(text)} chars -> {len(enhanced)} chars")
             if len(enhanced) == 0:
                 logger.error("Level 1 returned empty text, using original")
@@ -139,12 +159,25 @@ class EnhancementEngine:
         discipline: str
     ) -> tuple[str, List[Dict]]:
         """Level 2: Native-like expression enhancement."""
-        prompt = f"""Fix awkward non-native phrases in this {discipline} text. Make it sound like a real person wrote it - natural, with personality, NOT polished or AI-generated. Keep the author's word choices and sentence patterns. Don't make everything uniform.
+        prompt = f"""You are helping improve awkward non-native expressions in this {discipline} text while keeping it authentically human.
 
-{text}"""
+CRITICAL - SOUND LIKE A REAL PERSON:
+- Fix only the most awkward non-native phrasings
+- Make it sound natural but NOT polished or AI-generated
+- Keep the author's vocabulary level - don't upgrade simple words to fancy ones
+- Preserve the author's sentence patterns and rhythm
+- Maintain personality quirks, emphatic statements, and informal touches
+- Real people don't speak uniformly - keep variation in tone and style
+- Avoid creating smooth, perfect prose - keep some roughness
+- Think: "Native English speaker chatting naturally" not "Professional editor's perfect version"
+
+Original text:
+{text}
+
+Return naturally improved text that still sounds human-written:"""
 
         try:
-            enhanced = await self.llm_client.generate(prompt, temperature=0.75, max_tokens=4000)
+            enhanced = await self.llm_client.generate(prompt, temperature=0.78, max_tokens=4000)
             logger.info(f"Level 2 completed: {len(text)} chars -> {len(enhanced)} chars")
             if len(enhanced) == 0:
                 logger.error("Level 2 returned empty text, using original")
@@ -163,7 +196,7 @@ class EnhancementEngine:
         """Level 3: Academic style and conventions."""
         prompt = f"""You are helping a researcher improve their {discipline} paper to meet publication standards while keeping their authentic voice.
 
-CRITICAL - KEEP IT HUMAN:
+CRITICAL - KEEP IT HUMAN (Anti-AI-Detection):
 - Add appropriate academic phrasing where needed (hedging, formal connectives)
 - Do NOT over-formalize - real academic papers have natural flow, not robotic precision
 - Maintain the author's argumentative style and reasoning approach
@@ -171,7 +204,18 @@ CRITICAL - KEEP IT HUMAN:
 - Use academic vocabulary selectively - do NOT replace every casual word
 - Preserve the author's examples, analogies, and explanations
 - Real academic writing has personality - keep it, don't sterilize it
+- Keep occasional contractions, personal statements, or direct addresses if present
+- Maintain the author's emphasis patterns (bold, italics, exclamation marks if used)
+- Real papers have inconsistent formality levels across sections - that's OK
+- Don't impose a template structure - keep the author's organization
 - Think: "Published paper by a human researcher" not "AI-generated academic template"
+
+AVOID these AI-like patterns:
+- Perfect parallel structure in every paragraph
+- Overuse of "Moreover", "Furthermore", "Thus", "Hence"
+- Every sentence starting with different words (forced variety is detectable)
+- Uniform paragraph lengths
+- Eliminating all contractions and informal phrases
 
 Original text:
 {text}
@@ -179,7 +223,7 @@ Original text:
 Return the text with selective academic improvements that preserve human authenticity:"""
 
         try:
-            enhanced = await self.llm_client.generate(prompt, temperature=0.85, max_tokens=4000)
+            enhanced = await self.llm_client.generate(prompt, temperature=0.87, max_tokens=4000)
             logger.info(f"Level 3 completed: {len(text)} chars -> {len(enhanced)} chars")
             if len(enhanced) == 0:
                 logger.error("Level 3 returned empty text, using original")
@@ -199,7 +243,7 @@ Return the text with selective academic improvements that preserve human authent
         prompt = f"""You are helping a researcher improve the flow and coherence of their {discipline} paper while maintaining their natural writing style.
 
 CRITICAL - ANTI-AI-DETECTION PRINCIPLES:
-- Improve logical connections and paragraph flow where genuinely needed
+- Improve logical connections and paragraph flow ONLY where genuinely needed
 - Do NOT create artificial "perfect" transitions - real writing has natural, sometimes abrupt shifts
 - Maintain the author's unique way of organizing thoughts - don't impose a template structure
 - Keep the author's sentence variety - mix of long, short, complex, and simple sentences
@@ -207,17 +251,28 @@ CRITICAL - ANTI-AI-DETECTION PRINCIPLES:
 - Real human writing has rhythm variations - don't smooth everything out
 - Keep occasional rhetorical questions, personal observations, or emphatic statements
 - Maintain the author's level of directness vs. indirectness
+- Preserve the author's paragraph breaks - don't reorganize structure
+- Keep repetition if it serves emphasis (humans do this naturally)
 - Think: "How would a human researcher naturally connect these ideas?" not "What's the most sophisticated way?"
 
-REMEMBER: AI detectors look for perfect uniformity, flawless transitions, and robotic consistency. Keep it imperfect and human.
+AVOID these AI-detector red flags:
+- Adding transition words to every paragraph start
+- Making every paragraph the same length
+- Creating perfectly smooth, flowing prose without any jumps
+- Using sophisticated vocabulary for transitions ("Consequently", "Notwithstanding")
+- Eliminating all redundancy (some repetition is human)
+- Making every topic sentence perfectly clear and structured
+- Balancing sentence lengths artificially
+
+REMEMBER: AI detectors look for perfect uniformity, flawless transitions, and robotic consistency. Keep it imperfect and human. Real academic writing has rough edges.
 
 Original text:
 {text}
 
-Return the text with natural flow improvements that a human would make:"""
+Return the text with minimal, natural flow improvements that a human would make:"""
 
         try:
-            enhanced = await self.llm_client.generate(prompt, temperature=0.9, max_tokens=4000)
+            enhanced = await self.llm_client.generate(prompt, temperature=0.92, max_tokens=4000)
             logger.info(f"Level 4 completed: {len(text)} chars -> {len(enhanced)} chars")
             if len(enhanced) == 0:
                 logger.error("Level 4 returned empty text, using original")
@@ -226,6 +281,44 @@ Return the text with natural flow improvements that a human would make:"""
             return enhanced, changes
         except Exception as e:
             logger.error(f"Level 4 enhancement failed: {e}")
+            return text, []
+
+    async def _humanization_postprocess(
+        self,
+        text: str,
+        discipline: str
+    ) -> tuple[str, List[Dict]]:
+        """Final humanization pass to remove AI detection markers."""
+        prompt = f"""Review this {discipline} text and remove any AI-detection red flags while keeping all improvements.
+
+CRITICAL - REMOVE AI MARKERS:
+- If text sounds too polished or uniform, add natural variation
+- Replace overused AI transitions ("Moreover", "Furthermore", "Additionally") with simpler ones
+- Break up any artificially balanced sentence patterns
+- Add back some natural imperfections if everything seems too perfect
+- Ensure paragraph lengths vary naturally
+- Keep some informal elements or contractions if appropriate for the context
+- If transitions appear at every paragraph start, remove some
+- Vary the sentence opening patterns more naturally
+- Ensure the text doesn't sound like it came from a template
+
+THIS IS CRITICAL: Make MINIMAL changes - only what's needed to pass AI detection. Don't undo the good improvements. Just add natural human roughness where the text is too smooth.
+
+Original text:
+{text}
+
+Return text with subtle humanization tweaks (may be identical if already natural):"""
+
+        try:
+            enhanced = await self.llm_client.generate(prompt, temperature=0.88, max_tokens=4000)
+            logger.info(f"Humanization completed: {len(text)} chars -> {len(enhanced)} chars")
+            if len(enhanced) == 0:
+                logger.warning("Humanization returned empty text, using original")
+                return text, []
+            changes = self._detect_changes(text, enhanced, "Humanization")
+            return enhanced, changes
+        except Exception as e:
+            logger.error(f"Humanization failed: {e}")
             return text, []
 
     def _get_discipline_guidelines(self, discipline: str) -> str:
