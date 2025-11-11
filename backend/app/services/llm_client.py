@@ -128,7 +128,9 @@ class GeminiClient(LLMClient):
             response.raise_for_status()
 
             data = response.json()
-            return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+
+            # Try to parse response in multiple formats
+            return self._parse_response(data)
 
         except Exception as e:
             logger.error(f"Gemini API error: {e}")
@@ -186,11 +188,61 @@ class GeminiClient(LLMClient):
             response.raise_for_status()
 
             data = response.json()
-            return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+
+            # Try to parse response in multiple formats
+            return self._parse_response(data)
 
         except Exception as e:
             logger.error(f"Gemini API error: {e}")
             raise
+
+    def _parse_response(self, data: Dict[str, Any]) -> str:
+        """Parse Gemini API response with support for multiple formats."""
+        logger.debug(f"Parsing Gemini response. Top-level keys: {list(data.keys())}")
+
+        # Format 1: Standard Gemini API format
+        # {"candidates": [{"content": {"parts": [{"text": "..."}]}}]}
+        try:
+            text = data["candidates"][0]["content"]["parts"][0]["text"]
+            logger.debug("Parsed using standard Gemini format")
+            return text.strip()
+        except (KeyError, IndexError, TypeError) as e:
+            logger.debug(f"Standard format failed: {e}")
+
+        # Format 2: OpenAI-compatible format (some proxies)
+        # {"choices": [{"message": {"content": "..."}}]}
+        try:
+            text = data["choices"][0]["message"]["content"]
+            logger.debug("Parsed using OpenAI-compatible format")
+            return text.strip()
+        except (KeyError, IndexError, TypeError) as e:
+            logger.debug(f"OpenAI format failed: {e}")
+
+        # Format 3: Direct text field
+        # {"text": "..."}
+        if "text" in data and isinstance(data["text"], str):
+            logger.debug("Parsed using direct text format")
+            return data["text"].strip()
+
+        # Format 4: Simple content field
+        # {"content": "..."}
+        if "content" in data:
+            if isinstance(data["content"], str):
+                logger.debug("Parsed using direct content format")
+                return data["content"].strip()
+            elif isinstance(data["content"], dict) and "text" in data["content"]:
+                logger.debug("Parsed using nested content.text format")
+                return data["content"]["text"].strip()
+
+        # Format 5: Response field
+        # {"response": "..."}
+        if "response" in data and isinstance(data["response"], str):
+            logger.debug("Parsed using response format")
+            return data["response"].strip()
+
+        # If none of the formats work, log the full response
+        logger.error(f"Cannot parse Gemini response. Full response: {data}")
+        raise ValueError(f"Unsupported response format. Available keys: {list(data.keys())}")
 
     async def __aenter__(self):
         return self
