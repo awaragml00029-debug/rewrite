@@ -1437,6 +1437,1346 @@ graph TD
     M --> O[导出结果]
 ```
 
+### 7.4 核心组件详细实现
+
+#### 7.4.1 主编辑器组件
+
+```tsx
+// src/components/Editor/MainEditor.tsx
+
+import React, { useState, useCallback, useEffect } from 'react';
+import { Card, Button, Select, Space, Divider, Spin, message } from 'antd';
+import {
+  FileTextOutlined,
+  ThunderboltOutlined,
+  CheckCircleOutlined,
+  DownloadOutlined
+} from '@ant-design/icons';
+import MonacoEditor from '@monaco-editor/react';
+import DiffViewer from './DiffViewer';
+import AnalysisPanel from './AnalysisPanel';
+import RecommendationPanel from './RecommendationPanel';
+import EnhancementProgress from './EnhancementProgress';
+import { useEnhancement } from '@/hooks/useEnhancement';
+import { useAnalysis } from '@/hooks/useAnalysis';
+
+interface MainEditorProps {
+  initialText?: string;
+  discipline?: string;
+}
+
+const MainEditor: React.FC<MainEditorProps> = ({
+  initialText = '',
+  discipline = 'general'
+}) => {
+  // State management
+  const [text, setText] = useState(initialText);
+  const [enhancedText, setEnhancedText] = useState('');
+  const [selectedLevel, setSelectedLevel] = useState(2);
+  const [viewMode, setViewMode] = useState<'edit' | 'compare' | 'analysis'>('edit');
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Custom hooks
+  const { enhance, progress, changes } = useEnhancement();
+  const { analyze, analysisResult } = useAnalysis();
+
+  // Handle text analysis
+  const handleAnalyze = useCallback(async () => {
+    if (!text.trim()) {
+      message.warning('请输入文本');
+      return;
+    }
+
+    setIsProcessing(true);
+    setViewMode('analysis');
+
+    try {
+      await analyze(text, discipline);
+      message.success('分析完成');
+    } catch (error) {
+      message.error('分析失败：' + error.message);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [text, discipline, analyze]);
+
+  // Handle text enhancement
+  const handleEnhance = useCallback(async () => {
+    if (!text.trim()) {
+      message.warning('请输入文本');
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const result = await enhance(text, selectedLevel, discipline);
+      setEnhancedText(result.enhanced_text);
+      setViewMode('compare');
+      message.success('改写完成');
+    } catch (error) {
+      message.error('改写失败：' + error.message);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [text, selectedLevel, discipline, enhance]);
+
+  // Handle export
+  const handleExport = useCallback(() => {
+    const exportText = enhancedText || text;
+    const blob = new Blob([exportText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `enhanced_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [text, enhancedText]);
+
+  return (
+    <div className="main-editor-container">
+      {/* Toolbar */}
+      <Card className="toolbar-card">
+        <Space split={<Divider type="vertical" />}>
+          {/* Enhancement Level Selector */}
+          <Space>
+            <span>改写级别：</span>
+            <Select
+              value={selectedLevel}
+              onChange={setSelectedLevel}
+              style={{ width: 200 }}
+              disabled={isProcessing}
+            >
+              <Select.Option value={1}>Level 1 - 基础纠错</Select.Option>
+              <Select.Option value={2}>Level 2 - Native表达</Select.Option>
+              <Select.Option value={3}>Level 3 - 学术规范</Select.Option>
+              <Select.Option value={4}>Level 4 - 整体润色</Select.Option>
+            </Select>
+          </Space>
+
+          {/* Action Buttons */}
+          <Space>
+            <Button
+              type="default"
+              icon={<FileTextOutlined />}
+              onClick={handleAnalyze}
+              loading={isProcessing && viewMode === 'analysis'}
+            >
+              文本分析
+            </Button>
+            <Button
+              type="primary"
+              icon={<ThunderboltOutlined />}
+              onClick={handleEnhance}
+              loading={isProcessing && viewMode !== 'analysis'}
+            >
+              开始改写
+            </Button>
+            {enhancedText && (
+              <Button
+                icon={<DownloadOutlined />}
+                onClick={handleExport}
+              >
+                导出结果
+              </Button>
+            )}
+          </Space>
+
+          {/* View Mode Toggle */}
+          <Space>
+            <Button
+              type={viewMode === 'edit' ? 'primary' : 'default'}
+              onClick={() => setViewMode('edit')}
+            >
+              编辑
+            </Button>
+            <Button
+              type={viewMode === 'compare' ? 'primary' : 'default'}
+              onClick={() => setViewMode('compare')}
+              disabled={!enhancedText}
+            >
+              对比
+            </Button>
+            <Button
+              type={viewMode === 'analysis' ? 'primary' : 'default'}
+              onClick={() => setViewMode('analysis')}
+              disabled={!analysisResult}
+            >
+              分析
+            </Button>
+          </Space>
+        </Space>
+      </Card>
+
+      {/* Progress Indicator */}
+      {isProcessing && progress && (
+        <EnhancementProgress progress={progress} />
+      )}
+
+      {/* Main Content Area */}
+      <div className="content-area">
+        {viewMode === 'edit' && (
+          <Card title="文本编辑器" className="editor-card">
+            <MonacoEditor
+              height="60vh"
+              language="plaintext"
+              value={text}
+              onChange={(value) => setText(value || '')}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineNumbers: 'on',
+                wordWrap: 'on',
+                automaticLayout: true
+              }}
+            />
+            <div className="editor-stats">
+              <Space>
+                <span>字数：{text.split(/\s+/).filter(w => w).length}</span>
+                <span>字符数：{text.length}</span>
+              </Space>
+            </div>
+          </Card>
+        )}
+
+        {viewMode === 'compare' && enhancedText && (
+          <DiffViewer
+            original={text}
+            enhanced={enhancedText}
+            changes={changes}
+            onAcceptChange={(changeId) => {
+              // Handle change acceptance
+              console.log('Accepted change:', changeId);
+            }}
+            onRejectChange={(changeId) => {
+              // Handle change rejection
+              console.log('Rejected change:', changeId);
+            }}
+          />
+        )}
+
+        {viewMode === 'analysis' && analysisResult && (
+          <AnalysisPanel result={analysisResult} />
+        )}
+      </div>
+
+      {/* Recommendations Panel (shown after enhancement) */}
+      {enhancedText && (
+        <RecommendationPanel text={enhancedText} discipline={discipline} />
+      )}
+    </div>
+  );
+};
+
+export default MainEditor;
+```
+
+#### 7.4.2 对比显示组件
+
+```tsx
+// src/components/Editor/DiffViewer.tsx
+
+import React, { useMemo } from 'react';
+import { Card, Row, Col, Tag, Tooltip, Space, Button } from 'antd';
+import {
+  CheckOutlined,
+  CloseOutlined,
+  InfoCircleOutlined
+} from '@ant-design/icons';
+import { diffWords, diffSentences } from 'diff';
+import './DiffViewer.css';
+
+interface Change {
+  id: string;
+  type: string;
+  original: string;
+  suggested: string;
+  reason: string;
+  severity: number;
+  position: { start: number; end: number };
+}
+
+interface DiffViewerProps {
+  original: string;
+  enhanced: string;
+  changes?: Change[];
+  onAcceptChange?: (changeId: string) => void;
+  onRejectChange?: (changeId: string) => void;
+}
+
+const DiffViewer: React.FC<DiffViewerProps> = ({
+  original,
+  enhanced,
+  changes = [],
+  onAcceptChange,
+  onRejectChange
+}) => {
+  // Calculate word-level diff
+  const wordDiff = useMemo(() => {
+    return diffWords(original, enhanced);
+  }, [original, enhanced]);
+
+  // Calculate sentence-level diff
+  const sentenceDiff = useMemo(() => {
+    return diffSentences(original, enhanced);
+  }, [original, enhanced]);
+
+  // Render word diff with highlighting
+  const renderWordDiff = () => {
+    return (
+      <div className="diff-content">
+        {wordDiff.map((part, index) => {
+          const className = part.added
+            ? 'diff-added'
+            : part.removed
+            ? 'diff-removed'
+            : 'diff-unchanged';
+
+          return (
+            <span key={index} className={className}>
+              {part.value}
+            </span>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Get severity color
+  const getSeverityColor = (severity: number) => {
+    if (severity >= 4) return 'red';
+    if (severity >= 3) return 'orange';
+    if (severity >= 2) return 'blue';
+    return 'green';
+  };
+
+  // Get change type label
+  const getChangeTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      'grammar': '语法',
+      'vocabulary': '词汇',
+      'collocation': '搭配',
+      'style': '风格',
+      'structure': '结构',
+      'academic': '学术规范'
+    };
+    return labels[type] || type;
+  };
+
+  return (
+    <div className="diff-viewer-container">
+      {/* Side-by-side comparison */}
+      <Row gutter={16}>
+        <Col span={12}>
+          <Card
+            title="原始文本"
+            className="original-card"
+            size="small"
+          >
+            <div className="text-display original-text">
+              {original}
+            </div>
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card
+            title="改写后文本"
+            className="enhanced-card"
+            size="small"
+          >
+            <div className="text-display enhanced-text">
+              {enhanced}
+            </div>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Unified diff view */}
+      <Card
+        title="详细对比"
+        className="unified-diff-card"
+        style={{ marginTop: 16 }}
+      >
+        {renderWordDiff()}
+      </Card>
+
+      {/* Changes list */}
+      {changes.length > 0 && (
+        <Card
+          title={`修改详情（${changes.length}处）`}
+          className="changes-card"
+          style={{ marginTop: 16 }}
+        >
+          <Space direction="vertical" style={{ width: '100%' }} size="middle">
+            {changes.map((change) => (
+              <Card
+                key={change.id}
+                size="small"
+                className="change-item"
+                extra={
+                  <Space>
+                    <Tag color={getSeverityColor(change.severity)}>
+                      {getChangeTypeLabel(change.type)}
+                    </Tag>
+                    {onAcceptChange && (
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={<CheckOutlined />}
+                        onClick={() => onAcceptChange(change.id)}
+                      >
+                        接受
+                      </Button>
+                    )}
+                    {onRejectChange && (
+                      <Button
+                        type="text"
+                        size="small"
+                        danger
+                        icon={<CloseOutlined />}
+                        onClick={() => onRejectChange(change.id)}
+                      >
+                        拒绝
+                      </Button>
+                    )}
+                  </Space>
+                }
+              >
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <div>
+                    <span className="change-label">原文：</span>
+                    <span className="change-original">{change.original}</span>
+                  </div>
+                  <div>
+                    <span className="change-label">修改为：</span>
+                    <span className="change-suggested">{change.suggested}</span>
+                  </div>
+                  <div>
+                    <Tooltip title="修改原因">
+                      <InfoCircleOutlined style={{ marginRight: 8 }} />
+                    </Tooltip>
+                    <span className="change-reason">{change.reason}</span>
+                  </div>
+                </Space>
+              </Card>
+            ))}
+          </Space>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+export default DiffViewer;
+```
+
+#### 7.4.3 文本分析面板
+
+```tsx
+// src/components/Editor/AnalysisPanel.tsx
+
+import React from 'react';
+import { Card, Row, Col, Progress, List, Tag, Statistic, Space } from 'antd';
+import {
+  CheckCircleOutlined,
+  WarningOutlined,
+  CloseCircleOutlined
+} from '@ant-design/icons';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+} from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
+
+interface Issue {
+  type: string;
+  severity: number;
+  description: string;
+  suggestion: string;
+  location?: { start: number; end: number };
+}
+
+interface AnalysisResult {
+  overall_score: number;
+  lexical: {
+    diversity_score: number;
+    issues: Issue[];
+  };
+  syntactic: {
+    complexity: number;
+    variety_score: number;
+    issues: Issue[];
+  };
+  discourse: {
+    coherence_score: number;
+    issues: Issue[];
+  };
+  statistics: {
+    word_count: number;
+    sentence_count: number;
+    avg_sentence_length: number;
+    unique_words: number;
+  };
+}
+
+interface AnalysisPanelProps {
+  result: AnalysisResult;
+}
+
+const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ result }) => {
+  // Get severity icon
+  const getSeverityIcon = (severity: number) => {
+    if (severity >= 4) return <CloseCircleOutlined style={{ color: '#ff4d4f' }} />;
+    if (severity >= 3) return <WarningOutlined style={{ color: '#faad14' }} />;
+    return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
+  };
+
+  // Get score color
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return '#52c41a';
+    if (score >= 60) return '#faad14';
+    return '#ff4d4f';
+  };
+
+  // Prepare chart data
+  const scoreData = {
+    labels: ['词汇', '句法', '语篇'],
+    datasets: [{
+      label: '得分',
+      data: [
+        result.lexical.diversity_score * 100,
+        result.syntactic.variety_score * 100,
+        result.discourse.coherence_score * 100
+      ],
+      backgroundColor: [
+        'rgba(255, 99, 132, 0.5)',
+        'rgba(54, 162, 235, 0.5)',
+        'rgba(255, 206, 86, 0.5)',
+      ],
+      borderColor: [
+        'rgba(255, 99, 132, 1)',
+        'rgba(54, 162, 235, 1)',
+        'rgba(255, 206, 86, 1)',
+      ],
+      borderWidth: 1,
+    }]
+  };
+
+  // Collect all issues
+  const allIssues = [
+    ...result.lexical.issues,
+    ...result.syntactic.issues,
+    ...result.discourse.issues
+  ].sort((a, b) => b.severity - a.severity);
+
+  return (
+    <div className="analysis-panel-container">
+      {/* Overall Score */}
+      <Row gutter={16}>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="综合得分"
+              value={result.overall_score}
+              suffix="/ 100"
+              valueStyle={{ color: getScoreColor(result.overall_score) }}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="词汇多样性"
+              value={(result.lexical.diversity_score * 100).toFixed(1)}
+              suffix="/ 100"
+              prefix={<CheckCircleOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="句法复杂度"
+              value={(result.syntactic.complexity * 100).toFixed(1)}
+              suffix="/ 100"
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="语篇连贯性"
+              value={(result.discourse.coherence_score * 100).toFixed(1)}
+              suffix="/ 100"
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Statistics */}
+      <Card title="文本统计" style={{ marginTop: 16 }}>
+        <Row gutter={16}>
+          <Col span={6}>
+            <Statistic title="总字数" value={result.statistics.word_count} />
+          </Col>
+          <Col span={6}>
+            <Statistic title="句子数" value={result.statistics.sentence_count} />
+          </Col>
+          <Col span={6}>
+            <Statistic
+              title="平均句长"
+              value={result.statistics.avg_sentence_length.toFixed(1)}
+              suffix="词"
+            />
+          </Col>
+          <Col span={6}>
+            <Statistic title="独特词汇" value={result.statistics.unique_words} />
+          </Col>
+        </Row>
+      </Card>
+
+      {/* Score Visualization */}
+      <Row gutter={16} style={{ marginTop: 16 }}>
+        <Col span={12}>
+          <Card title="分项得分">
+            <Bar
+              data={scoreData}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: { display: false },
+                  title: { display: false }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    max: 100
+                  }
+                }
+              }}
+            />
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card title="问题分布">
+            <Doughnut
+              data={{
+                labels: ['严重', '中等', '轻微'],
+                datasets: [{
+                  data: [
+                    allIssues.filter(i => i.severity >= 4).length,
+                    allIssues.filter(i => i.severity === 3).length,
+                    allIssues.filter(i => i.severity < 3).length,
+                  ],
+                  backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(255, 206, 86, 0.5)',
+                    'rgba(75, 192, 192, 0.5)',
+                  ],
+                }]
+              }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Issues List */}
+      <Card
+        title={`发现的问题（${allIssues.length}个）`}
+        style={{ marginTop: 16 }}
+      >
+        <List
+          dataSource={allIssues}
+          renderItem={(issue) => (
+            <List.Item>
+              <List.Item.Meta
+                avatar={getSeverityIcon(issue.severity)}
+                title={
+                  <Space>
+                    <Tag color={issue.severity >= 4 ? 'red' : issue.severity >= 3 ? 'orange' : 'blue'}>
+                      {issue.type}
+                    </Tag>
+                    <span>{issue.description}</span>
+                  </Space>
+                }
+                description={
+                  <div>
+                    <strong>建议：</strong>{issue.suggestion}
+                  </div>
+                }
+              />
+            </List.Item>
+          )}
+        />
+      </Card>
+    </div>
+  );
+};
+
+export default AnalysisPanel;
+```
+
+#### 7.4.4 进度指示器组件
+
+```tsx
+// src/components/Editor/EnhancementProgress.tsx
+
+import React, { useEffect, useState } from 'react';
+import { Card, Progress, Steps, Space, Tag } from 'antd';
+import {
+  LoadingOutlined,
+  CheckCircleOutlined,
+  SyncOutlined
+} from '@ant-design/icons';
+
+interface ProgressData {
+  percentage: number;
+  current_stage: string;
+  total_stages: number;
+  completed_stages: number;
+  estimated_time: number;
+  message?: string;
+}
+
+interface EnhancementProgressProps {
+  progress: ProgressData;
+}
+
+const EnhancementProgress: React.FC<EnhancementProgressProps> = ({ progress }) => {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setElapsed(prev => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const stages = [
+    { title: '文本预处理', key: 'preprocessing' },
+    { title: '问题诊断', key: 'diagnosis' },
+    { title: 'Level 1 纠错', key: 'level1' },
+    { title: 'Level 2 优化', key: 'level2' },
+    { title: 'Level 3 规范', key: 'level3' },
+    { title: 'Level 4 润色', key: 'level4' },
+    { title: '生成报告', key: 'report' },
+  ];
+
+  const getCurrentStageIndex = () => {
+    return stages.findIndex(s =>
+      progress.current_stage.toLowerCase().includes(s.key)
+    );
+  };
+
+  return (
+    <Card className="progress-card" style={{ marginTop: 16, marginBottom: 16 }}>
+      <Space direction="vertical" style={{ width: '100%' }} size="large">
+        {/* Progress Bar */}
+        <div>
+          <div style={{ marginBottom: 8 }}>
+            <Space>
+              <SyncOutlined spin />
+              <span>{progress.message || progress.current_stage}</span>
+              <Tag color="processing">
+                已用时：{formatTime(elapsed)}
+              </Tag>
+              <Tag color="blue">
+                预计剩余：{formatTime(progress.estimated_time)}
+              </Tag>
+            </Space>
+          </div>
+          <Progress
+            percent={Math.round(progress.percentage)}
+            status="active"
+            strokeColor={{
+              '0%': '#108ee9',
+              '100%': '#87d068',
+            }}
+          />
+        </div>
+
+        {/* Stages */}
+        <Steps
+          current={getCurrentStageIndex()}
+          size="small"
+          items={stages.map((stage, index) => ({
+            title: stage.title,
+            icon: index < getCurrentStageIndex()
+              ? <CheckCircleOutlined />
+              : index === getCurrentStageIndex()
+              ? <LoadingOutlined />
+              : undefined
+          }))}
+        />
+      </Space>
+    </Card>
+  );
+};
+
+export default EnhancementProgress;
+```
+
+#### 7.4.5 推荐面板组件
+
+```tsx
+// src/components/Editor/RecommendationPanel.tsx
+
+import React, { useState, useEffect } from 'react';
+import { Card, Tabs, List, Tag, Rate, Button, Space, Tooltip, Spin } from 'antd';
+import {
+  BookOutlined,
+  TeamOutlined,
+  ReadOutlined,
+  LinkOutlined,
+  StarOutlined
+} from '@ant-design/icons';
+import { useRecommendations } from '@/hooks/useRecommendations';
+
+interface Journal {
+  title: string;
+  similarity_score: number;
+  impact_factor?: number;
+  open_access: boolean;
+  publisher: string;
+  url: string;
+  confidence: string;
+}
+
+interface Paper {
+  title: string;
+  authors: string[];
+  year: number;
+  journal: string;
+  doi: string;
+  similarity_score: number;
+  citations: number;
+  url: string;
+}
+
+interface Author {
+  name: string;
+  affiliation: string;
+  h_index?: number;
+  total_publications: number;
+  similarity_score: number;
+}
+
+interface RecommendationPanelProps {
+  text: string;
+  discipline: string;
+}
+
+const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
+  text,
+  discipline
+}) => {
+  const [activeTab, setActiveTab] = useState('journals');
+  const {
+    journals,
+    papers,
+    authors,
+    loading,
+    fetchRecommendations
+  } = useRecommendations();
+
+  useEffect(() => {
+    fetchRecommendations(text);
+  }, [text]);
+
+  // Render journal card
+  const renderJournalCard = (journal: Journal) => (
+    <List.Item
+      actions={[
+        <Button
+          type="link"
+          icon={<LinkOutlined />}
+          href={journal.url}
+          target="_blank"
+        >
+          访问
+        </Button>,
+        <Button
+          type="text"
+          icon={<StarOutlined />}
+        >
+          收藏
+        </Button>
+      ]}
+    >
+      <List.Item.Meta
+        avatar={<BookOutlined style={{ fontSize: 24, color: '#1890ff' }} />}
+        title={
+          <Space>
+            <span>{journal.title}</span>
+            {journal.open_access && (
+              <Tag color="green">开放获取</Tag>
+            )}
+            <Tag color={
+              journal.confidence === 'Very High' ? 'red' :
+              journal.confidence === 'High' ? 'orange' :
+              journal.confidence === 'Medium' ? 'blue' : 'default'
+            }>
+              {journal.confidence}
+            </Tag>
+          </Space>
+        }
+        description={
+          <Space direction="vertical" size="small">
+            <div>
+              <strong>出版商：</strong>{journal.publisher}
+            </div>
+            {journal.impact_factor && (
+              <div>
+                <strong>影响因子：</strong>
+                <Tag color="blue">{journal.impact_factor.toFixed(2)}</Tag>
+              </div>
+            )}
+            <div>
+              <strong>匹配度：</strong>
+              <Progress
+                percent={Math.round(journal.similarity_score * 100)}
+                size="small"
+                style={{ width: 200 }}
+              />
+            </div>
+          </Space>
+        }
+      />
+    </List.Item>
+  );
+
+  // Render paper card
+  const renderPaperCard = (paper: Paper) => (
+    <List.Item
+      actions={[
+        <Button
+          type="link"
+          icon={<LinkOutlined />}
+          href={paper.url || `https://doi.org/${paper.doi}`}
+          target="_blank"
+        >
+          查看
+        </Button>
+      ]}
+    >
+      <List.Item.Meta
+        avatar={<ReadOutlined style={{ fontSize: 24, color: '#52c41a' }} />}
+        title={paper.title}
+        description={
+          <Space direction="vertical" size="small">
+            <div>
+              <strong>作者：</strong>{paper.authors.join(', ')}
+            </div>
+            <div>
+              <strong>期刊：</strong>{paper.journal} ({paper.year})
+            </div>
+            <Space>
+              <Tag color="blue">被引：{paper.citations}</Tag>
+              <Tag color="green">
+                相关性：{(paper.similarity_score * 100).toFixed(0)}%
+              </Tag>
+            </Space>
+            {paper.doi && (
+              <div>
+                <strong>DOI：</strong>
+                <code>{paper.doi}</code>
+              </div>
+            )}
+          </Space>
+        }
+      />
+    </List.Item>
+  );
+
+  // Render author card
+  const renderAuthorCard = (author: Author) => (
+    <List.Item>
+      <List.Item.Meta
+        avatar={<TeamOutlined style={{ fontSize: 24, color: '#722ed1' }} />}
+        title={author.name}
+        description={
+          <Space direction="vertical" size="small">
+            <div>
+              <strong>机构：</strong>{author.affiliation}
+            </div>
+            <Space>
+              {author.h_index && (
+                <Tag color="purple">H-index: {author.h_index}</Tag>
+              )}
+              <Tag color="cyan">发表数：{author.total_publications}</Tag>
+              <Tag color="green">
+                匹配度：{(author.similarity_score * 100).toFixed(0)}%
+              </Tag>
+            </Space>
+          </Space>
+        }
+      />
+    </List.Item>
+  );
+
+  return (
+    <Card
+      title="文献推荐"
+      className="recommendation-panel"
+      style={{ marginTop: 16 }}
+    >
+      <Spin spinning={loading}>
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={[
+            {
+              key: 'journals',
+              label: (
+                <span>
+                  <BookOutlined />
+                  推荐期刊 ({journals.length})
+                </span>
+              ),
+              children: (
+                <List
+                  dataSource={journals}
+                  renderItem={renderJournalCard}
+                  locale={{ emptyText: '暂无推荐期刊' }}
+                />
+              )
+            },
+            {
+              key: 'papers',
+              label: (
+                <span>
+                  <ReadOutlined />
+                  相关文献 ({papers.length})
+                </span>
+              ),
+              children: (
+                <List
+                  dataSource={papers}
+                  renderItem={renderPaperCard}
+                  locale={{ emptyText: '暂无相关文献' }}
+                />
+              )
+            },
+            {
+              key: 'authors',
+              label: (
+                <span>
+                  <TeamOutlined />
+                  相关作者 ({authors.length})
+                </span>
+              ),
+              children: (
+                <List
+                  dataSource={authors}
+                  renderItem={renderAuthorCard}
+                  locale={{ emptyText: '暂无相关作者' }}
+                />
+              )
+            }
+          ]}
+        />
+      </Spin>
+    </Card>
+  );
+};
+
+export default RecommendationPanel;
+```
+
+### 7.5 自定义Hooks实现
+
+```typescript
+// src/hooks/useEnhancement.ts
+
+import { useState, useCallback } from 'react';
+import axios from 'axios';
+
+interface ProgressData {
+  percentage: number;
+  current_stage: string;
+  total_stages: number;
+  completed_stages: number;
+  estimated_time: number;
+  message?: string;
+}
+
+interface Change {
+  id: string;
+  type: string;
+  original: string;
+  suggested: string;
+  reason: string;
+  severity: number;
+}
+
+interface EnhancementResult {
+  enhanced_text: string;
+  changes: Change[];
+  report: any;
+}
+
+export const useEnhancement = () => {
+  const [progress, setProgress] = useState<ProgressData | null>(null);
+  const [changes, setChanges] = useState<Change[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const enhance = useCallback(async (
+    text: string,
+    level: number,
+    discipline: string
+  ): Promise<EnhancementResult> => {
+    setLoading(true);
+    setProgress(null);
+    setChanges([]);
+
+    try {
+      // Create enhancement job
+      const response = await axios.post('/api/enhance', {
+        text,
+        level,
+        discipline
+      });
+
+      const jobId = response.data.job_id;
+
+      // Poll for progress
+      return await pollEnhancementStatus(jobId);
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const pollEnhancementStatus = async (jobId: string): Promise<EnhancementResult> => {
+    return new Promise((resolve, reject) => {
+      const interval = setInterval(async () => {
+        try {
+          const response = await axios.get(`/api/enhance/status/${jobId}`);
+          const { status, progress: progressData, result } = response.data;
+
+          if (progressData) {
+            setProgress(progressData);
+          }
+
+          if (status === 'completed') {
+            clearInterval(interval);
+            setChanges(result.changes || []);
+            resolve(result);
+          } else if (status === 'failed') {
+            clearInterval(interval);
+            reject(new Error('Enhancement failed'));
+          }
+        } catch (error) {
+          clearInterval(interval);
+          reject(error);
+        }
+      }, 1000);
+    });
+  };
+
+  return {
+    enhance,
+    progress,
+    changes,
+    loading
+  };
+};
+```
+
+```typescript
+// src/hooks/useAnalysis.ts
+
+import { useState, useCallback } from 'react';
+import axios from 'axios';
+
+export const useAnalysis = () => {
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const analyze = useCallback(async (text: string, discipline: string) => {
+    setLoading(true);
+    try {
+      const response = await axios.post('/api/analyze', {
+        text,
+        discipline,
+        analysis_types: ['lexical', 'syntactic', 'discourse']
+      });
+      setAnalysisResult(response.data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return {
+    analyze,
+    analysisResult,
+    loading
+  };
+};
+```
+
+```typescript
+// src/hooks/useRecommendations.ts
+
+import { useState, useCallback } from 'react';
+import axios from 'axios';
+
+export const useRecommendations = () => {
+  const [journals, setJournals] = useState<any[]>([]);
+  const [papers, setPapers] = useState<any[]>([]);
+  const [authors, setAuthors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchRecommendations = useCallback(async (text: string) => {
+    setLoading(true);
+    try {
+      // Fetch all recommendations in parallel
+      const [journalsRes, papersRes, authorsRes] = await Promise.all([
+        axios.post('/api/recommendations/journals', { text }),
+        axios.post('/api/recommendations/papers', { text }),
+        axios.post('/api/recommendations/authors', { text })
+      ]);
+
+      setJournals(journalsRes.data.journals || []);
+      setPapers(papersRes.data.papers || []);
+      setAuthors(authorsRes.data.authors || []);
+    } catch (error) {
+      console.error('Failed to fetch recommendations:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return {
+    journals,
+    papers,
+    authors,
+    loading,
+    fetchRecommendations
+  };
+};
+```
+
+### 7.6 样式文件
+
+```css
+/* src/components/Editor/DiffViewer.css */
+
+.diff-viewer-container {
+  padding: 16px;
+}
+
+.text-display {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  padding: 16px;
+  border-radius: 4px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.original-text {
+  background-color: #fff7e6;
+}
+
+.enhanced-text {
+  background-color: #f0f9ff;
+}
+
+.diff-content {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 2;
+  padding: 16px;
+  background-color: #fafafa;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.diff-added {
+  background-color: #d4f4dd;
+  color: #0c5f20;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+.diff-removed {
+  background-color: #ffe7e7;
+  color: #d01f1f;
+  padding: 2px 4px;
+  text-decoration: line-through;
+  border-radius: 2px;
+}
+
+.diff-unchanged {
+  color: #333;
+}
+
+.change-item {
+  transition: all 0.3s;
+}
+
+.change-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.change-label {
+  font-weight: 600;
+  color: #666;
+  margin-right: 8px;
+}
+
+.change-original {
+  color: #d01f1f;
+  background-color: #ffe7e7;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.change-suggested {
+  color: #0c5f20;
+  background-color: #d4f4dd;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.change-reason {
+  color: #555;
+  font-style: italic;
+}
+```
+
 ---
 
 ## 8. 部署与运维
