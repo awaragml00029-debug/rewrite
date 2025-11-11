@@ -26,9 +26,36 @@ const DiffViewer: React.FC<DiffViewerProps> = ({
 
   const handleCopyEnhanced = async () => {
     try {
-      await navigator.clipboard.writeText(enhanced);
-      message.success('Enhanced text copied to clipboard!');
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(enhanced);
+        message.success('Enhanced text copied to clipboard!');
+      } else {
+        // Fallback to older method
+        const textArea = document.createElement('textarea');
+        textArea.value = enhanced;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+          const successful = document.execCommand('copy');
+          if (successful) {
+            message.success('Enhanced text copied to clipboard!');
+          } else {
+            throw new Error('execCommand failed');
+          }
+        } catch (execErr) {
+          message.error('Failed to copy text. Please select and copy manually.');
+        } finally {
+          document.body.removeChild(textArea);
+        }
+      }
     } catch (err) {
+      console.error('Copy failed:', err);
       message.error('Failed to copy text. Please select and copy manually.');
     }
   };
