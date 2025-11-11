@@ -161,9 +161,22 @@ class EnhancementEngine:
         discipline: str
     ) -> tuple[str, List[Dict]]:
         """Level 3: Academic style and conventions."""
-        prompt = f"""Lightly adjust this {discipline} text toward academic style, but DON'T make it sound AI-written or overly formal. Keep the author's exact examples, reasoning flow, and personality. Real human academic writing has inconsistencies - preserve them. Only fix what truly needs fixing.
+        prompt = f"""You are helping a researcher improve their {discipline} paper to meet publication standards while keeping their authentic voice.
 
-{text}"""
+CRITICAL - KEEP IT HUMAN:
+- Add appropriate academic phrasing where needed (hedging, formal connectives)
+- Do NOT over-formalize - real academic papers have natural flow, not robotic precision
+- Maintain the author's argumentative style and reasoning approach
+- Keep varying sentence lengths and structures - real humans don't write perfectly balanced sentences
+- Use academic vocabulary selectively - do NOT replace every casual word
+- Preserve the author's examples, analogies, and explanations
+- Real academic writing has personality - keep it, don't sterilize it
+- Think: "Published paper by a human researcher" not "AI-generated academic template"
+
+Original text:
+{text}
+
+Return the text with selective academic improvements that preserve human authenticity:"""
 
         try:
             enhanced = await self.llm_client.generate(prompt, temperature=0.85, max_tokens=4000)
@@ -183,9 +196,25 @@ class EnhancementEngine:
         discipline: str
     ) -> tuple[str, List[Dict]]:
         """Level 4: Overall discourse and coherence optimization."""
-        prompt = f"""Adjust transitions ONLY where absolutely needed in this {discipline} text. Keep the author's organizational approach even if imperfect. Real human writing has natural jumps and rhythm variations - DON'T smooth everything out. Maintain roughness and authenticity. Avoid creating AI-like perfect coherence.
+        prompt = f"""You are helping a researcher improve the flow and coherence of their {discipline} paper while maintaining their natural writing style.
 
-{text}"""
+CRITICAL - ANTI-AI-DETECTION PRINCIPLES:
+- Improve logical connections and paragraph flow where genuinely needed
+- Do NOT create artificial "perfect" transitions - real writing has natural, sometimes abrupt shifts
+- Maintain the author's unique way of organizing thoughts - don't impose a template structure
+- Keep the author's sentence variety - mix of long, short, complex, and simple sentences
+- Preserve informal transitions if they work ("However" vs "Nevertheless" - both are valid)
+- Real human writing has rhythm variations - don't smooth everything out
+- Keep occasional rhetorical questions, personal observations, or emphatic statements
+- Maintain the author's level of directness vs. indirectness
+- Think: "How would a human researcher naturally connect these ideas?" not "What's the most sophisticated way?"
+
+REMEMBER: AI detectors look for perfect uniformity, flawless transitions, and robotic consistency. Keep it imperfect and human.
+
+Original text:
+{text}
+
+Return the text with natural flow improvements that a human would make:"""
 
         try:
             enhanced = await self.llm_client.generate(prompt, temperature=0.9, max_tokens=4000)
