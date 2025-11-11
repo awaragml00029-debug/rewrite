@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/.pytest_cache/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+backend/.env
+!backend/.env.example
+!backend/.env.recommended
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build outputs
+frontend/dist/
+frontend/build/
+backend/build/
+backend/dist/
+
+# Logs
+*.log
+logs/
+backend/logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Package locks (keep in version control for production, but optional for development)
+# Uncomment if you want to ignore lock files:
+# package-lock.json
+# frontend/package-lock.json
+
+# Python virtual environments
+venv/
+env/
+ENV/
+*.egg-info/
+
+# Coverage reports
+coverage/
+.coverage
+htmlcov/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
