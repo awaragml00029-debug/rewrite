@@ -17,10 +17,10 @@ fi
 # Start development server
 echo ""
 echo "🚀 Starting development server..."
-echo "📖 Frontend: http://localhost:3000"
-echo "🔌 API Proxy: http://localhost:3000/api -> http://localhost:8000/api"
+echo "📖 Frontend: http://localhost:3003"
+echo "🔌 API Proxy: http://localhost:3003/api -> http://localhost:53431/api"
 echo ""
-echo "💡 Make sure the backend server is running on port 8000!"
+echo "💡 Make sure the backend server is running on port 53431!"
 echo ""
 
 npm run dev

@@ -48,7 +48,7 @@ python -c "import nltk; nltk.data.find('tokenizers/punkt')" 2>/dev/null || {
 # Start server
 echo ""
 echo "🚀 Starting server..."
-echo "📖 API Documentation: http://localhost:8000/docs"
-echo "❤️  Health Check: http://localhost:8000/api/health"
+echo "📖 API Documentation: http://localhost:53431/docs"
+echo "❤️  Health Check: http://localhost:53431/api/health"
 echo ""
 python -m app.main

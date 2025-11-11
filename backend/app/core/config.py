@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     # API Settings
     api_host: str = Field(default="0.0.0.0", env="API_HOST")
-    api_port: int = Field(default=8000, env="API_PORT")
+    api_port: int = Field(default=53431, env="API_PORT")
     api_reload: bool = Field(default=True, env="API_RELOAD")
 
     # LLM Configuration
@@ -37,7 +37,7 @@ class Settings(BaseSettings):
 
     # CORS Settings
     cors_origins: List[str] = Field(
-        default=["http://localhost:3000", "http://localhost:5173"],
+        default=["http://localhost:3003", "http://localhost:5173"],
         env="CORS_ORIGINS"
     )
 
