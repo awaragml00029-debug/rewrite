@@ -136,6 +136,7 @@ Provide ONLY the corrected text without explanations."""
 
         try:
             enhanced = await self.llm_client.generate(prompt, temperature=0.3)
+            logger.info(f"Level 1 completed: {len(text)} chars -> {len(enhanced)} chars")
             changes = self._detect_changes(text, enhanced, "Level 1: Basic Corrections")
             return enhanced, changes
         except Exception as e:
@@ -179,6 +180,7 @@ Provide ONLY the enhanced text without explanations."""
                 system_prompt=system_prompt,
                 temperature=0.4
             )
+            logger.info(f"Level 2 completed: {len(text)} chars -> {len(enhanced)} chars")
             changes = self._detect_changes(text, enhanced, "Level 2: Native Expression")
             return enhanced, changes
         except Exception as e:
@@ -225,6 +227,7 @@ Provide ONLY the enhanced text without explanations."""
                 system_prompt=system_prompt,
                 temperature=0.5
             )
+            logger.info(f"Level 3 completed: {len(text)} chars -> {len(enhanced)} chars")
             changes = self._detect_changes(text, enhanced, "Level 3: Academic Style")
             return enhanced, changes
         except Exception as e:
@@ -269,6 +272,7 @@ Provide ONLY the optimized text without explanations."""
                 system_prompt=system_prompt,
                 temperature=0.6
             )
+            logger.info(f"Level 4 completed: {len(text)} chars -> {len(enhanced)} chars")
             changes = self._detect_changes(text, enhanced, "Level 4: Discourse")
             return enhanced, changes
         except Exception as e:

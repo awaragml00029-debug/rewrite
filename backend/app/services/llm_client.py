@@ -78,7 +78,13 @@ class OpenAIClient(LLMClient):
                 temperature=temperature,
                 max_tokens=max_tokens
             )
-            return response.choices[0].message.content.strip()
+            content = response.choices[0].message.content
+            if content is None:
+                logger.warning(f"API returned None content. Response: {response}")
+                return ""
+            result = content.strip()
+            logger.info(f"OpenAI API response: {len(result)} characters")
+            return result
         except Exception as e:
             error_str = str(e)
             # Check if error is about unsupported temperature parameter
@@ -91,7 +97,13 @@ class OpenAIClient(LLMClient):
                         messages=messages,
                         max_tokens=max_tokens
                     )
-                    return response.choices[0].message.content.strip()
+                    content = response.choices[0].message.content
+                    if content is None:
+                        logger.warning(f"API returned None content on retry. Response: {response}")
+                        return ""
+                    result = content.strip()
+                    logger.info(f"OpenAI API retry success: received {len(result)} characters")
+                    return result
                 except Exception as retry_e:
                     logger.error(f"OpenAI API error on retry: {retry_e}")
                     raise

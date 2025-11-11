@@ -217,11 +217,15 @@ class JANEClient:
             return 'Low'
 
     @staticmethod
-    def _parse_authors(authors_string: str) -> List[str]:
-        """Parse comma-separated author list."""
-        if not authors_string:
+    def _parse_authors(authors_value: Any) -> List[str]:
+        """Parse author list (handles both string and list formats)."""
+        if not authors_value:
             return []
-        return [author.strip() for author in authors_string.split(',') if author.strip()]
+        if isinstance(authors_value, list):
+            return [str(author).strip() for author in authors_value if author]
+        elif isinstance(authors_value, str):
+            return [author.strip() for author in authors_value.split(',') if author.strip()]
+        return []
 
     @staticmethod
     def _parse_list(value: Any) -> List[str]:
