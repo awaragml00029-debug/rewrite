@@ -2,7 +2,7 @@
  * RecommendationPanel Component - JANE API recommendations
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, Tabs, List, Tag, Button, Space, Spin, Empty, Progress } from 'antd';
 import {
   BookOutlined,
@@ -22,14 +22,16 @@ const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
   discipline,
 }) => {
   const [activeTab, setActiveTab] = useState('journals');
+  const [hasData, setHasData] = useState(false);
   const { journals, papers, authors, loading, fetchRecommendations } =
     useRecommendations();
 
-  useEffect(() => {
+  const handleFetchRecommendations = async () => {
     if (text) {
-      fetchRecommendations(text, 10);
+      await fetchRecommendations(text, 10);
+      setHasData(true);
     }
-  }, [text, fetchRecommendations]);
+  };
 
   const renderJournalCard = (journal: any) => (
     <List.Item
@@ -168,8 +170,25 @@ const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
       title="Literature Recommendations"
       className="recommendation-panel"
       style={{ marginTop: 16 }}
+      extra={
+        <Button
+          type="primary"
+          icon={<BookOutlined />}
+          onClick={handleFetchRecommendations}
+          loading={loading}
+          disabled={!text}
+        >
+          Get Recommendations
+        </Button>
+      }
     >
-      <Spin spinning={loading}>
+      {!hasData && !loading ? (
+        <Empty
+          description="Click 'Get Recommendations' to find relevant journals, papers, and authors"
+          style={{ padding: '40px 0' }}
+        />
+      ) : (
+        <Spin spinning={loading}>
         <Tabs
           activeKey={activeTab}
           onChange={setActiveTab}
@@ -224,7 +243,8 @@ const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
             },
           ]}
         />
-      </Spin>
+        </Spin>
+      )}
     </Card>
   );
 };
