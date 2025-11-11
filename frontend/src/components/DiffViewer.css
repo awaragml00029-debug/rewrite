@@ -1,0 +1,138 @@
+/* DiffViewer Component Styles */
+
+.diff-viewer {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.text-display {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  padding: 16px;
+  border-radius: 4px;
+  max-height: 500px;
+  overflow-y: auto;
+  background-color: #fafafa;
+}
+
+.original-text {
+  background-color: #fff7e6;
+  border-left: 4px solid #ffa940;
+}
+
+.enhanced-text {
+  background-color: #f0f9ff;
+  border-left: 4px solid #40a9ff;
+}
+
+.diff-content {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+  font-size: 14px;
+  line-height: 2;
+  padding: 16px;
+  background-color: #fafafa;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.diff-added {
+  background-color: #d4f4dd;
+  color: #0c5f20;
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-weight: 500;
+}
+
+.diff-removed {
+  background-color: #ffe7e7;
+  color: #d01f1f;
+  padding: 2px 4px;
+  text-decoration: line-through;
+  border-radius: 2px;
+}
+
+.diff-unchanged {
+  color: #333;
+}
+
+.change-label {
+  font-weight: 600;
+  color: #666;
+  margin-right: 8px;
+}
+
+.change-original {
+  color: #d01f1f;
+  background-color: #ffe7e7;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 13px;
+}
+
+.change-suggested {
+  color: #0c5f20;
+  background-color: #d4f4dd;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 13px;
+}
+
+.change-reason {
+  color: #555;
+  font-style: italic;
+}
+
+.original-card .ant-card-head,
+.enhanced-card .ant-card-head {
+  font-weight: 600;
+}
+
+.unified-diff-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.changes-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Scrollbar styling */
+.text-display::-webkit-scrollbar,
+.diff-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.text-display::-webkit-scrollbar-track,
+.diff-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.text-display::-webkit-scrollbar-thumb,
+.diff-content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.text-display::-webkit-scrollbar-thumb:hover,
+.diff-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
