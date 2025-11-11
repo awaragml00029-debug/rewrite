@@ -21,7 +21,7 @@ const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
   text,
   discipline,
 }) => {
-  const [activeTab, setActiveTab] = useState('journals');
+  const [activeTab, setActiveTab] = useState('papers');
   const [hasData, setHasData] = useState(false);
   const { journals, papers, authors, loading, fetchRecommendations } =
     useRecommendations();
@@ -93,50 +93,58 @@ const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
     </List.Item>
   );
 
-  const renderPaperCard = (paper: any) => (
-    <List.Item
-      actions={[
-        <Button
-          type="link"
-          icon={<LinkOutlined />}
-          href={paper.url || `https://doi.org/${paper.doi}`}
-          target="_blank"
-          key="view"
-        >
-          View
-        </Button>,
-      ]}
-    >
-      <List.Item.Meta
-        avatar={<ReadOutlined style={{ fontSize: 24, color: '#52c41a' }} />}
-        title={paper.title}
-        description={
-          <Space direction="vertical" size="small">
-            <div>
-              <strong>Authors:</strong> {paper.authors.join(', ')}
-            </div>
-            <div>
-              <strong>Journal:</strong> {paper.journal}{' '}
-              {paper.year && `(${paper.year})`}
-            </div>
-            <Space>
-              {paper.citations !== undefined && (
-                <Tag color="blue">Citations: {paper.citations}</Tag>
-              )}
-              <Tag color="green">
-                Relevance: {(paper.similarity_score * 100).toFixed(0)}%
-              </Tag>
-            </Space>
-            {paper.doi && (
+  const renderPaperCard = (paper: any) => {
+    // Generate link URL - prefer paper.url, fallback to DOI, then PubMed search
+    const paperUrl = paper.url
+      || (paper.doi ? `https://doi.org/${paper.doi}` : null)
+      || (paper.title ? `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(paper.title)}` : null);
+
+    return (
+      <List.Item
+        actions={paperUrl ? [
+          <Button
+            type="link"
+            icon={<LinkOutlined />}
+            href={paperUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            key="view"
+          >
+            View
+          </Button>,
+        ] : []}
+      >
+        <List.Item.Meta
+          avatar={<ReadOutlined style={{ fontSize: 24, color: '#52c41a' }} />}
+          title={paper.title}
+          description={
+            <Space direction="vertical" size="small" style={{ width: '100%' }}>
               <div>
-                <strong>DOI:</strong> <code>{paper.doi}</code>
+                <strong>Authors:</strong> {paper.authors?.join(', ') || 'Unknown'}
               </div>
-            )}
-          </Space>
-        }
-      />
-    </List.Item>
-  );
+              <div>
+                <strong>Journal:</strong> {paper.journal || 'N/A'}{' '}
+                {paper.year && `(${paper.year})`}
+              </div>
+              <Space wrap>
+                <Tag color="blue">
+                  Citations: {paper.citations ?? 0}
+                </Tag>
+                <Tag color="green">
+                  Relevance: {paper.similarity_score ? (paper.similarity_score * 100).toFixed(0) : 0}%
+                </Tag>
+              </Space>
+              {paper.doi && (
+                <div>
+                  <strong>DOI:</strong> <code>{paper.doi}</code>
+                </div>
+              )}
+            </Space>
+          }
+        />
+      </List.Item>
+    );
+  };
 
   const renderAuthorCard = (author: any) => (
     <List.Item>
@@ -193,22 +201,6 @@ const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
           activeKey={activeTab}
           onChange={setActiveTab}
           items={[
-            {
-              key: 'journals',
-              label: (
-                <span>
-                  <BookOutlined />
-                  Journals ({journals.length})
-                </span>
-              ),
-              children: (
-                <List
-                  dataSource={journals}
-                  renderItem={renderJournalCard}
-                  locale={{ emptyText: <Empty description="No journal recommendations available" /> }}
-                />
-              ),
-            },
             {
               key: 'papers',
               label: (

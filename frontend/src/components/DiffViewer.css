@@ -89,17 +89,31 @@
   font-style: italic;
 }
 
+.original-card,
+.enhanced-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+}
+
 .original-card .ant-card-head,
 .enhanced-card .ant-card-head {
   font-weight: 600;
+  background: linear-gradient(to bottom, #fffbf0, #ffffff);
+}
+
+.enhanced-card .ant-card-head {
+  background: linear-gradient(to bottom, #f0f9ff, #ffffff);
 }
 
 .unified-diff-card {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
 }
 
 .changes-card {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  margin-top: 16px;
 }
 
 /* Scrollbar styling */

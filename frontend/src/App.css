@@ -2,7 +2,7 @@
 
 .app-layout {
   min-height: 100vh;
-  background-color: #f0f2f5;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
 }
 
 .app-header {
@@ -11,12 +11,15 @@
   height: 80px;
   display: flex;
   align-items: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .header-content {
   width: 100%;
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -31,31 +34,51 @@
   font-weight: 700;
   color: white;
   letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .subtitle {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 14px;
   margin-top: 4px;
 }
 
 .app-content {
-  padding: 24px;
+  padding: 32px 24px;
 }
 
 .container {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
 .control-panel {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+}
+
+.control-panel .ant-card-body {
+  padding: 20px 24px;
 }
 
 .control-panel label {
-  font-weight: 500;
+  font-weight: 600;
   margin-right: 8px;
-  color: #595959;
+  color: #262626;
+  font-size: 14px;
+}
+
+.control-panel .ant-space {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.control-panel .ant-space-item {
+  display: flex;
+  align-items: center;
 }
 
 .view-toggle {
@@ -64,16 +87,33 @@
 
 .main-content {
   min-height: 400px;
+  margin-bottom: 24px;
 }
 
-.editor-card {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
+.editor-card,
 .analysis-panel,
 .diff-viewer,
 .recommendation-panel {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
   animation: fadeIn 0.3s ease-in;
+}
+
+.editor-card .ant-card-head,
+.analysis-panel .ant-card-head,
+.diff-viewer .ant-card-head,
+.recommendation-panel .ant-card-head {
+  background: linear-gradient(to bottom, #fafafa, #ffffff);
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.editor-card .ant-card-head-title,
+.analysis-panel .ant-card-head-title,
+.diff-viewer .ant-card-head-title,
+.recommendation-panel .ant-card-head-title {
+  font-weight: 600;
+  font-size: 16px;
+  color: #262626;
 }
 
 @keyframes fadeIn {

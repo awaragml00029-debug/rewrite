@@ -54,6 +54,16 @@ const App: React.FC = () => {
       return;
     }
 
+    // Check character limit
+    const MAX_CHARS = 4000;
+    if (text.length > MAX_CHARS) {
+      message.error({
+        content: `Text is too long (${text.length} characters). Please reduce to ${MAX_CHARS} characters or less. Currently over limit by ${text.length - MAX_CHARS} characters.`,
+        duration: 5,
+      });
+      return;
+    }
+
     try {
       const result = await enhance(text, selectedLevel, discipline);
       setEnhancedText(result.enhanced_text);
