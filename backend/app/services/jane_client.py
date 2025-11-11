@@ -3,7 +3,7 @@
 import logging
 import asyncio
 from typing import List, Dict, Any, Optional
-from zeep import AsyncClient
+from zeep import Client
 from zeep.exceptions import Fault
 
 from app.core.config import settings
@@ -23,7 +23,8 @@ class JANEClient:
         """Get or create SOAP client."""
         if self.client is None:
             try:
-                self.client = await AsyncClient.create(self.wsdl_url)
+                # Create synchronous client and use it with asyncio.to_thread
+                self.client = await asyncio.to_thread(Client, self.wsdl_url)
                 logger.info("JANE SOAP client initialized")
             except Exception as e:
                 logger.error(f"Failed to initialize JANE client: {e}")

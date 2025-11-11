@@ -80,8 +80,24 @@ class OpenAIClient(LLMClient):
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
-            logger.error(f"OpenAI API error: {e}")
-            raise
+            error_str = str(e)
+            # Check if error is about unsupported temperature parameter
+            if "temperature" in error_str.lower() and ("unsupported" in error_str.lower() or "does not support" in error_str.lower()):
+                logger.warning(f"Model {self.model} does not support custom temperature, retrying with default value")
+                try:
+                    # Retry without temperature parameter (will use API default)
+                    response = await self.client.chat.completions.create(
+                        model=self.model,
+                        messages=messages,
+                        max_tokens=max_tokens
+                    )
+                    return response.choices[0].message.content.strip()
+                except Exception as retry_e:
+                    logger.error(f"OpenAI API error on retry: {retry_e}")
+                    raise
+            else:
+                logger.error(f"OpenAI API error: {e}")
+                raise
 
 
 class GeminiClient(LLMClient):
