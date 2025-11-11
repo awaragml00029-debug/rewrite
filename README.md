@@ -1,273 +1,257 @@
 # AWIES - Academic Writing Intelligence Enhancement System
 
-一个智能学术写作提升系统，帮助非英语母语研究者提升英文论文写作质量。
+🎓 Professional academic writing enhancement system with AI-powered text improvement and literature recommendations.
 
-## 🎯 核心功能
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](docker-compose.yml)
+[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
+[![React](https://img.shields.io/badge/react-18+-blue.svg)](https://reactjs.org/)
 
-- **多级文本改写** (4个级别)
-  - Level 1: 基础纠错
-  - Level 2: Native表达优化
-  - Level 3: 学术规范强化
-  - Level 4: 整体润色
+[中文文档](README_CN.md) | **English**
 
-- **全方位文本分析**
-  - 词汇分析（多样性、简单词汇检测）
-  - 句法分析（复杂度、句式多样性）
-  - 语篇分析（连贯性、过渡词使用）
+## ✨ Features
 
-- **智能文献推荐** (基于JANE API)
-  - 期刊推荐
-  - 相关论文推荐
-  - 潜在合作者推荐
+- 🎯 **4-Level Text Enhancement** - Progressive AI-powered improvements
+  - Level 1: Grammar and spelling corrections
+  - Level 2: Natural expression improvements
+  - Level 3: Academic style and conventions
+  - Level 4: Discourse optimization and flow
 
-- **实时进度显示**
-  - 分阶段处理
-  - 进度百分比
-  - 预计剩余时间
+- 📊 **Comprehensive Text Analysis**
+  - Lexical diversity and vocabulary assessment
+  - Syntactic complexity analysis
+  - Discourse coherence evaluation
 
-## 🏗️ 项目结构
+- 📚 **Literature Recommendations** (via JANE API)
+  - Relevant paper suggestions with DOI links
+  - Author/collaborator recommendations
+  - PubMed integration
 
-```
-awies/
-├── backend/              # FastAPI后端
-│   ├── app/
-│   │   ├── api/         # API路由
-│   │   ├── core/        # 配置
-│   │   ├── services/    # 核心服务
-│   │   │   ├── llm_client.py         # LLM集成 (OpenAI/Gemini)
-│   │   │   ├── text_analyzer.py      # 文本分析
-│   │   │   ├── enhancement_engine.py # 改写引擎
-│   │   │   └── jane_client.py        # JANE API集成
-│   │   ├── models/      # 数据模型
-│   │   └── main.py      # 主应用
-│   ├── tests/           # 测试
-│   ├── requirements.txt
-│   ├── .env.example
-│   └── start.sh         # 启动脚本
-│
-├── frontend/            # React前端 (待实现)
-│   ├── src/
-│   │   ├── components/  # UI组件
-│   │   ├── hooks/       # 自定义Hooks
-│   │   ├── services/    # API服务
-│   │   └── types/       # TypeScript类型
-│   └── package.json
-│
-└── AWIES_Complete_Design_Document.md  # 完整设计文档
+- 🔍 **Side-by-Side Comparison** - Detailed diff view with change tracking
+- 🎨 **Modern UI** - Clean, responsive interface
+- 🚫 **Anti-AI Detection** - Maintains human writing characteristics
+- 🐳 **Docker Ready** - One-command deployment
+
+## 🚀 Quick Start with Docker (Recommended)
+
+### Prerequisites
+- Docker 20.10+ and Docker Compose 2.0+
+- OpenAI or Gemini API key
+
+### Installation
+
+```bash
+# 1. Copy environment template
+cp .env.docker.example .env
+
+# 2. Edit .env and add your API credentials
+nano .env
+
+# 3. Start services
+./docker-start.sh
+
+# Or manually:
+docker-compose up -d
 ```
 
-## 🚀 快速开始
+Access the application:
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
 
-### 后端设置
+📖 See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for detailed Docker documentation.
 
-1. **安装依赖**
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   ```
+## ⚙️ Configuration
 
-2. **配置环境变量**
-   ```bash
-   cp .env.example .env
-   # 编辑 .env 文件，添加你的API密钥
-   ```
-
-3. **启动服务器**
-   ```bash
-   # 使用启动脚本（推荐）
-   ./start.sh
-
-   # 或手动启动
-   python -m app.main
-   ```
-
-4. **访问API文档**
-   - Swagger UI: http://localhost:8000/docs
-   - ReDoc: http://localhost:8000/redoc
-
-### 配置示例
-
-在 `.env` 文件中配置你的LLM API：
-
-**使用OpenAI:**
-```env
+### OpenAI Setup
+```bash
 LLM_PROVIDER=openai
 LLM_API_KEY=sk-your-key-here
-LLM_MODEL=gpt-4
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL=gpt-4o
 ```
 
-**使用Gemini:**
-```env
+### Google Gemini Setup
+```bash
 LLM_PROVIDER=gemini
 LLM_API_KEY=your-gemini-key
-LLM_MODEL=gemini-pro
+LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+LLM_MODEL=gemini-2.0-flash-001
 ```
 
-**使用本地模型 (OpenAI兼容):**
-```env
+### OpenAI-Compatible APIs
+```bash
 LLM_PROVIDER=openai
-LLM_BASE_URL=http://localhost:1234/v1
-LLM_API_KEY=not-needed
-LLM_MODEL=local-model
+LLM_API_KEY=your-key
+LLM_BASE_URL=https://api.ohmygpt.com/v1
+LLM_MODEL=gpt-4o
 ```
 
-## 📖 API使用示例
+## 📖 Usage
 
-### 1. 文本分析
+1. **Enter Text** - Paste academic text (up to 4000 characters)
+2. **Select Options** - Choose discipline and enhancement level
+3. **Enhance** - Click enhance button
+4. **Review** - Compare original and enhanced text
+5. **Copy** - Use quick copy button for enhanced text
 
-```bash
-curl -X POST "http://localhost:8000/api/analyze" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "This is a big problem in modern research.",
-    "discipline": "computer_science"
-  }'
-```
+### Enhancement Levels
 
-### 2. 文本改写
+| Level | Name | Function | Use Case |
+|-------|------|----------|----------|
+| 1 | Basic | Grammar & spelling | Draft stage |
+| 2 | Expression | Natural phrasing | Fluency improvement |
+| 3 | Academic | Formal style | Publication prep |
+| 4 | Discourse | Flow & structure | Final polish |
 
-```bash
-# 创建改写任务
-curl -X POST "http://localhost:8000/api/enhance" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "We need to make research on this topic.",
-    "level": 2,
-    "discipline": "general"
-  }'
+## 🏗️ Manual Installation
 
-# 返回: {"job_id": "xxx-xxx-xxx", "status": "pending"}
-
-# 查询进度
-curl "http://localhost:8000/api/enhance/status/xxx-xxx-xxx"
-```
-
-### 3. 获取期刊推荐
-
-```bash
-curl -X POST "http://localhost:8000/api/recommendations/journals" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "Machine learning applications in medical diagnosis...",
-    "limit": 10
-  }'
-```
-
-## 🎨 前端组件（设计已完成）
-
-前端使用React + TypeScript + Ant Design，包含：
-
-- **MainEditor** - 主编辑器组件
-- **DiffViewer** - 对比显示组件
-- **AnalysisPanel** - 分析结果面板
-- **EnhancementProgress** - 进度指示器
-- **RecommendationPanel** - 推荐面板
-
-详细设计见 `AWIES_Complete_Design_Document.md` 第7章。
-
-## 🔧 技术栈
-
-### 后端
-- **FastAPI** - 现代化Python Web框架
-- **LLM Integration** - OpenAI / Gemini API
-- **NLP** - spaCy, NLTK, textstat
-- **JANE API** - 期刊/文献推荐
-
-### 前端（待实现）
-- **React 18** + TypeScript
-- **Ant Design** - UI组件库
-- **Monaco Editor** - 代码编辑器
-- **Chart.js** - 数据可视化
-- **diff** - 文本对比
-
-## 📊 改写级别说明
-
-| 级别 | 名称 | 功能 | 适用场景 |
-|------|------|------|---------|
-| Level 1 | 基础纠错 | 语法、拼写、标点 | 草稿阶段 |
-| Level 2 | Native表达 | 地道表达、搭配 | 提升流畅度 |
-| Level 3 | 学术规范 | 学术词汇、语态 | 投稿准备 |
-| Level 4 | 整体润色 | 语篇结构、连贯性 | 最终审校 |
-
-## 🎓 支持的学科
-
-- Computer Science (计算机科学)
-- Biology (生物学)
-- Social Sciences (社会科学)
-- Engineering (工程学)
-- General (通用学术)
-
-每个学科有专门的写作规范和风格指导。
-
-## ⚡ 性能优化
-
-### 限速因素
-1. **LLM API调用** - 最慢 (5-30秒)
-   - 优化：分段处理、缓存
-2. **JANE API** - 中等 (5-15秒)
-   - 优化：并发请求、Redis缓存
-3. **文本分析** - 快 (<2秒)
-4. **前端渲染** - 很快 (<0.5秒)
-
-### 优化建议
-- 启用Redis缓存
-- 使用异步处理
-- 较短文本用Level 1-2
-- 考虑本地LLM模型
-
-## 🧪 测试
+### Backend
 
 ```bash
 cd backend
-pytest tests/
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+
+# Configure
+cp .env.example .env
+nano .env  # Add API key
+
+# Start
+./start.sh
 ```
 
-## 📝 开发计划
+### Frontend
 
-- [x] 完整设计文档
-- [x] 后端API实现
-- [x] LLM集成（OpenAI/Gemini）
-- [x] 文本分析模块
-- [x] 改写引擎
-- [x] JANE API集成
-- [ ] 前端React实现
-- [ ] 前后端联调
-- [ ] Docker部署
-- [ ] 性能优化
+```bash
+cd frontend
 
-## 🤝 贡献
+# Install and start
+npm install
+npm run dev
+```
 
-欢迎提Issue和Pull Request！
+## 📚 API Documentation
+
+### Key Endpoints
+
+- `POST /api/analyze` - Analyze text quality
+- `POST /api/enhance` - Create enhancement job
+- `GET /api/enhance/status/{job_id}` - Check status
+- `POST /api/recommendations/papers` - Get paper suggestions
+- `POST /api/recommendations/authors` - Get author suggestions
+
+Full API docs: http://localhost:8000/docs
+
+## 🛠️ Tech Stack
+
+**Backend**
+- FastAPI - Modern Python web framework
+- OpenAI/Gemini - LLM integration
+- spaCy, NLTK - NLP processing
+- JANE API - Literature recommendations
+
+**Frontend**
+- React 18 + TypeScript
+- Ant Design - UI components
+- Monaco Editor - Text editing
+- Vite - Build tool
+
+## 🐳 Docker Commands
+
+```bash
+# Start services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+
+# Rebuild
+docker-compose up -d --build
+
+# Check status
+docker-compose ps
+```
+
+## 🔧 Troubleshooting
+
+**Empty enhancement results**
+- Verify API key is correct
+- Check model name matches provider
+- View logs: `docker-compose logs backend`
+
+**Slow enhancement**
+- Normal for long texts (1000+ chars)
+- Level 4 takes longest
+- Check API rate limits
+
+**Port conflicts**
+- Change ports in `.env`:
+  ```bash
+  BACKEND_PORT=8001
+  FRONTEND_PORT=3001
+  ```
+
+See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for more troubleshooting.
+
+## 📁 Project Structure
+
+```
+rewrite/
+├── backend/              # FastAPI backend
+│   ├── app/
+│   │   ├── api/          # API routes
+│   │   ├── core/         # Configuration
+│   │   ├── services/     # Business logic
+│   │   └── main.py
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/             # React frontend
+│   ├── src/
+│   │   ├── components/   # UI components
+│   │   ├── hooks/        # Custom hooks
+│   │   └── services/     # API services
+│   ├── Dockerfile
+│   └── package.json
+├── docker-compose.yml    # Docker orchestration
+├── docker-start.sh       # Quick start script
+└── DOCKER_DEPLOYMENT.md  # Docker docs
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch
+3. Commit changes
+4. Push to branch
+5. Open Pull Request
 
 ## 📄 License
 
-MIT License
+MIT License - see [LICENSE](LICENSE) file
+
+## 🙏 Credits
+
+- Text enhancement: OpenAI/Gemini APIs
+- Literature recommendations: JANE API
+- UI framework: Ant Design
+- Built with: FastAPI, React, TypeScript
+
+## 📞 Support
+
+- 📖 [Docker Documentation](DOCKER_DEPLOYMENT.md)
+- 🐛 [Report Issues](https://github.com/your-repo/issues)
+- 💬 [Discussions](https://github.com/your-repo/discussions)
 
 ---
 
-## 常见问题
-
-### Q: 如何切换LLM提供商？
-
-A: 编辑 `.env` 文件，修改 `LLM_PROVIDER` 为 `openai` 或 `gemini`。
-
-### Q: 可以使用本地模型吗？
-
-A: 可以！设置 `LLM_PROVIDER=openai`，然后配置 `LLM_BASE_URL` 指向你的本地OpenAI兼容服务器（如LM Studio、Ollama等）。
-
-### Q: JANE API连接失败怎么办？
-
-A: JANE是外部服务，可能临时不可用。系统会优雅降级，返回空推荐列表不会影响核心改写功能。
-
-### Q: 改写速度太慢？
-
-A:
-1. 使用更低的改写级别（Level 1-2更快）
-2. 分段处理长文本
-3. 考虑使用本地LLM模型
-4. 启用Redis缓存
-
----
-
-**开发者**: AWIES Team
-**最后更新**: 2024-01-30
+Made with ❤️ for academic researchers worldwide

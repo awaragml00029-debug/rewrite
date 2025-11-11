@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: awies-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      # API Configuration
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_RELOAD=false
+
+      # LLM API Configuration
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_BASE_URL=${LLM_BASE_URL}
+      - LLM_MODEL=${LLM_MODEL:-gpt-4o}
+
+      # JANE API Configuration
+      - JANE_WSDL_URL=http://jane.biosemantics.org:8080/JaneServer/services/JaneSOAPServer?wsdl
+      - JANE_BASE_URL=http://jane.biosemantics.org/
+
+      # Redis Configuration (optional)
+      - REDIS_HOST=localhost
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_ENABLED=false
+
+      # CORS Settings
+      - CORS_ORIGINS=["http://localhost","http://localhost:80","http://localhost:3000"]
+
+      # Cache Settings
+      - CACHE_TTL=3600
+      - ENABLE_CACHE=true
+
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - backend-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: awies-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  backend-logs:
+    driver: local
