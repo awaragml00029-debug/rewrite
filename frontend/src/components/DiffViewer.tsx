@@ -3,8 +3,8 @@
  */
 
 import React, { useMemo } from 'react';
-import { Card, Row, Col, List, Tag, Space } from 'antd';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { Card, Row, Col, List, Tag, Space, Button, message } from 'antd';
+import { InfoCircleOutlined, CopyOutlined } from '@ant-design/icons';
 import { diffWords } from 'diff';
 import { Change } from '@/services/api';
 import './DiffViewer.css';
@@ -23,6 +23,15 @@ const DiffViewer: React.FC<DiffViewerProps> = ({
   const wordDiff = useMemo(() => {
     return diffWords(original, enhanced);
   }, [original, enhanced]);
+
+  const handleCopyEnhanced = async () => {
+    try {
+      await navigator.clipboard.writeText(enhanced);
+      message.success('Enhanced text copied to clipboard!');
+    } catch (err) {
+      message.error('Failed to copy text. Please select and copy manually.');
+    }
+  };
 
   const renderWordDiff = () => {
     return (
@@ -61,7 +70,21 @@ const DiffViewer: React.FC<DiffViewerProps> = ({
           </Card>
         </Col>
         <Col xs={24} lg={12}>
-          <Card title="Enhanced Text" className="enhanced-card" size="small">
+          <Card
+            title="Enhanced Text"
+            className="enhanced-card"
+            size="small"
+            extra={
+              <Button
+                type="primary"
+                size="small"
+                icon={<CopyOutlined />}
+                onClick={handleCopyEnhanced}
+              >
+                Copy
+              </Button>
+            }
+          >
             <div className="text-display enhanced-text">{enhanced}</div>
           </Card>
         </Col>
