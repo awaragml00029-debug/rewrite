@@ -117,26 +117,16 @@ class EnhancementEngine:
         discipline: str
     ) -> tuple[str, List[Dict]]:
         """Level 1: Basic grammar and spelling corrections."""
-        prompt = f"""Task: Correct basic grammar, spelling, and punctuation errors in this academic text.
+        prompt = f"""Correct the grammar, spelling, and punctuation in this {discipline} academic text. Return the complete corrected version:
 
-Instructions:
-- Fix grammatical errors
-- Correct spelling mistakes
-- Fix punctuation issues
-- Replace very simple words with more academic alternatives
-- Keep the same meaning and structure
-- Maintain all citations and references
-
-Academic Discipline: {discipline}
-
-Text:
-{text}
-
-Provide ONLY the corrected text without explanations."""
+{text}"""
 
         try:
-            enhanced = await self.llm_client.generate(prompt, temperature=0.3)
+            enhanced = await self.llm_client.generate(prompt, temperature=0.3, max_tokens=4000)
             logger.info(f"Level 1 completed: {len(text)} chars -> {len(enhanced)} chars")
+            if len(enhanced) == 0:
+                logger.error("Level 1 returned empty text, using original")
+                return text, []
             changes = self._detect_changes(text, enhanced, "Level 1: Basic Corrections")
             return enhanced, changes
         except Exception as e:
@@ -149,38 +139,16 @@ Provide ONLY the corrected text without explanations."""
         discipline: str
     ) -> tuple[str, List[Dict]]:
         """Level 2: Native-like expression enhancement."""
-        system_prompt = """You are an expert academic editor specializing in improving non-native English writing to sound more natural and native-like."""
+        prompt = f"""Improve this {discipline} text to sound more natural and native-like. Fix collocations and phrasing while keeping the same meaning:
 
-        prompt = f"""Task: Enhance this academic text to sound more like a native English speaker while preserving exact meaning.
-
-Academic Discipline: {discipline}
-
-Focus on:
-1. Natural collocations (e.g., "conduct research" not "make research")
-2. Idiomatic academic phrases native speakers commonly use
-3. Proper preposition usage
-4. Natural word order and sentence flow
-5. Appropriate verb tense usage
-
-Rules:
-- Maintain the EXACT original meaning
-- Keep the academic tone
-- Do NOT add new information
-- Preserve all citations and references
-- Only improve naturalness and fluency
-
-Text:
-{text}
-
-Provide ONLY the enhanced text without explanations."""
+{text}"""
 
         try:
-            enhanced = await self.llm_client.generate(
-                prompt,
-                system_prompt=system_prompt,
-                temperature=0.4
-            )
+            enhanced = await self.llm_client.generate(prompt, temperature=0.4, max_tokens=4000)
             logger.info(f"Level 2 completed: {len(text)} chars -> {len(enhanced)} chars")
+            if len(enhanced) == 0:
+                logger.error("Level 2 returned empty text, using original")
+                return text, []
             changes = self._detect_changes(text, enhanced, "Level 2: Native Expression")
             return enhanced, changes
         except Exception as e:
@@ -193,41 +161,16 @@ Provide ONLY the enhanced text without explanations."""
         discipline: str
     ) -> tuple[str, List[Dict]]:
         """Level 3: Academic style and conventions."""
-        system_prompt = """You are an expert academic writing consultant who ensures texts meet scholarly publication standards."""
+        prompt = f"""Enhance this text to meet {discipline} academic publication standards. Use formal vocabulary and appropriate hedging:
 
-        # Discipline-specific guidelines
-        discipline_guidelines = self._get_discipline_guidelines(discipline)
-
-        prompt = f"""Task: Enhance this text to meet academic publication standards in {discipline}.
-
-Discipline-Specific Guidelines:
-{discipline_guidelines}
-
-Focus on:
-1. Appropriate hedging language (may, might, suggests, indicates)
-2. Formal academic vocabulary
-3. Proper voice (active/passive based on discipline)
-4. Sentence complexity appropriate for scholarly writing
-5. Discipline-specific terminology and conventions
-
-Rules:
-- Maintain factual accuracy
-- Use appropriate hedging (avoid overstatements)
-- Keep all citations and references
-- Match the conventions of top-tier journals in this field
-
-Text:
-{text}
-
-Provide ONLY the enhanced text without explanations."""
+{text}"""
 
         try:
-            enhanced = await self.llm_client.generate(
-                prompt,
-                system_prompt=system_prompt,
-                temperature=0.5
-            )
+            enhanced = await self.llm_client.generate(prompt, temperature=0.5, max_tokens=4000)
             logger.info(f"Level 3 completed: {len(text)} chars -> {len(enhanced)} chars")
+            if len(enhanced) == 0:
+                logger.error("Level 3 returned empty text, using original")
+                return text, []
             changes = self._detect_changes(text, enhanced, "Level 3: Academic Style")
             return enhanced, changes
         except Exception as e:
@@ -240,39 +183,16 @@ Provide ONLY the enhanced text without explanations."""
         discipline: str
     ) -> tuple[str, List[Dict]]:
         """Level 4: Overall discourse and coherence optimization."""
-        system_prompt = """You are a senior academic editor who optimizes the overall flow and coherence of scholarly texts."""
+        prompt = f"""Optimize the flow and coherence of this {discipline} text. Improve transitions and paragraph structure:
 
-        prompt = f"""Task: Optimize the overall discourse structure and coherence of this academic text.
-
-Academic Discipline: {discipline}
-
-Focus on:
-1. Paragraph structure and organization
-2. Topic sentences and paragraph unity
-3. Transitions between ideas and paragraphs
-4. Sentence variety and rhythm
-5. Overall logical flow and argument progression
-6. Reader engagement
-
-Rules:
-- Maintain all original content and meaning
-- Improve readability and flow
-- Ensure each paragraph has a clear focus
-- Use effective transitions
-- Keep all citations and references
-
-Text:
-{text}
-
-Provide ONLY the optimized text without explanations."""
+{text}"""
 
         try:
-            enhanced = await self.llm_client.generate(
-                prompt,
-                system_prompt=system_prompt,
-                temperature=0.6
-            )
+            enhanced = await self.llm_client.generate(prompt, temperature=0.6, max_tokens=4000)
             logger.info(f"Level 4 completed: {len(text)} chars -> {len(enhanced)} chars")
+            if len(enhanced) == 0:
+                logger.error("Level 4 returned empty text, using original")
+                return text, []
             changes = self._detect_changes(text, enhanced, "Level 4: Discourse")
             return enhanced, changes
         except Exception as e:
